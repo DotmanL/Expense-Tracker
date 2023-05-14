@@ -1,6 +1,22 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    "experimentalDecorators": true,
+    "baseUrl": ".",
+    "paths": {
+      "components/*": ["src/components/*"],
+      "screens/*": ["src/screens/*"],
+      "interfaces/*": ["src/interfaces/*"],
+      "constants/*": ["src/constants/*"],
+    },
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "lib": ["ESNext"],
+    "noEmitHelpers": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "strict": true
   }
 }
