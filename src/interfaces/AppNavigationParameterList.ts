@@ -1,6 +1,6 @@
 export type AppNavigationParameterList = {
   AllExpenses: undefined;
   RecentExpenses: undefined;
-  ManageExpense: undefined;
+  ManageExpense: { expenseId: string };
   ExpensesOverview: undefined;
 };
