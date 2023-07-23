@@ -13,10 +13,11 @@ type Props = {
   label: string;
   textInputConfig?: TextInputProps;
   style?: StyleProp<ViewStyle>;
+  invalid: boolean;
 };
 
 function Input(props: Props) {
-  const { label, textInputConfig, style } = props;
+  const { label, invalid, textInputConfig, style } = props;
 
   const inputStyles: (typeof styles.input | typeof styles.inputMultiline)[] = [
     styles.input
@@ -28,8 +29,13 @@ function Input(props: Props) {
 
   return (
     <View style={[styles.inputContainer, style]}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput style={inputStyles} {...textInputConfig} />
+      <Text style={[styles.label, invalid && styles.invalidLabel]}>
+        {label}
+      </Text>
+      <TextInput
+        style={[inputStyles, invalid && styles.invalidInput]}
+        {...textInputConfig}
+      />
     </View>
   );
 }
@@ -56,5 +62,11 @@ const styles = StyleSheet.create({
   inputMultiline: {
     minHeight: 100,
     textAlignVertical: "top" //makes it work possible for both platforms
+  },
+  invalidLabel: {
+    color: GlobalStyles.colors.error500
+  },
+  invalidInput: {
+    backgroundColor: GlobalStyles.colors.error50
   }
 });

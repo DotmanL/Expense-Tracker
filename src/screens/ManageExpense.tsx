@@ -8,6 +8,7 @@ import { GlobalStyles } from "constants/styles";
 import { useContext } from "react";
 import { ExpensesContext } from "store/context/expensesContext";
 import ExpenseForm from "components/ManageExpense/ExpenseForm";
+import { IExpense } from "interfaces/IExpenses";
 
 type Props = {
   navigation: NativeStackNavigationProp<
@@ -24,6 +25,10 @@ function ManageExpense(props: Props) {
   const editedExpenseId = route.params?.expenseId;
   const isEditing = !!editedExpenseId;
 
+  const selectedExpense = expensesContext.expenses.find(
+    (expense) => expense.id === editedExpenseId
+  );
+
   useLayoutEffect(() => {
     navigation.setOptions({
       title: isEditing ? "Edit Expense" : "Add Expense"
@@ -39,19 +44,11 @@ function ManageExpense(props: Props) {
     navigation.goBack();
   }
 
-  function confirmHandler() {
+  function confirmHandler(expenseData: IExpense) {
     if (isEditing) {
-      expensesContext.updateExpense(editedExpenseId, {
-        description: "Test!!!!",
-        amount: 29.99,
-        date: new Date("2023-06-01")
-      });
+      expensesContext.updateExpense(editedExpenseId, expenseData);
     } else {
-      expensesContext.addExpense({
-        description: "Add New Test",
-        amount: 19.99,
-        date: new Date("2023-06-03")
-      });
+      expensesContext.addExpense(expenseData);
     }
     navigation.goBack();
   }
@@ -62,6 +59,7 @@ function ManageExpense(props: Props) {
         onCancel={cancelHandler}
         onSubmit={confirmHandler}
         submitButtonLabel={isEditing ? "Update" : "Add"}
+        currentExpense={selectedExpense}
       />
 
       {isEditing && (
