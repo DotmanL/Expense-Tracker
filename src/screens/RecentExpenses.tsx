@@ -25,12 +25,16 @@ function RecentExpenses() {
     getExpenses();
   }, []);
 
+  function errorHandler() {
+    setError("");
+  }
+
   if (isFetching) {
     return <LoadingOverlay />;
   }
 
   if (error && !isFetching) {
-    return <ErrorOverlay message={error} />;
+    return <ErrorOverlay message={error} onConfirm={errorHandler} />;
   }
 
   const recentExpenses = expensesContext.expenses.filter((expense) => {
