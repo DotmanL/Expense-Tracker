@@ -1,4 +1,4 @@
-import { useLayoutEffect } from "react";
+import { useLayoutEffect, useState } from "react";
 import { RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AppNavigationParameterList } from "interfaces/AppNavigationParameterList";
@@ -9,6 +9,9 @@ import { useContext } from "react";
 import { ExpensesContext } from "store/context/expensesContext";
 import ExpenseForm from "components/ManageExpense/ExpenseForm";
 import { IExpense } from "interfaces/IExpenses";
+import { storeExpense, updateExpense, deleteExpense } from "util/httpClient";
+import LoadingOverlay from "components/shared/LoadingOverlay";
+import ErrorOverlay from "components/shared/ErrorOverlay";
 
 type Props = {
   navigation: NativeStackNavigationProp<
@@ -21,6 +24,8 @@ type Props = {
 function ManageExpense(props: Props) {
   const { navigation, route } = props;
   const expensesContext = useContext(ExpensesContext);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
   const editedExpenseId = route.params?.expenseId;
   const isEditing = !!editedExpenseId;
@@ -39,18 +44,46 @@ function ManageExpense(props: Props) {
     navigation.goBack();
   }
 
-  function deleteExpense() {
-    expensesContext.deleteExpense(editedExpenseId);
-    navigation.goBack();
+  async function handleDeleteExpense() {
+    setIsSubmitting(true);
+
+    try {
+      await deleteExpense(editedExpenseId);
+      expensesContext.deleteExpense(editedExpenseId);
+      navigation.goBack();
+    } catch (error) {
+      setError("Could not delete expense - Please try again later");
+      setIsSubmitting(false);
+    }
   }
 
-  function confirmHandler(expenseData: IExpense) {
-    if (isEditing) {
-      expensesContext.updateExpense(editedExpenseId, expenseData);
-    } else {
-      expensesContext.addExpense(expenseData);
+  async function confirmHandler(expenseData: IExpense) {
+    setIsSubmitting(true);
+
+    try {
+      if (isEditing) {
+        expensesContext.updateExpense(editedExpenseId, expenseData);
+        await updateExpense(editedExpenseId, expenseData);
+      } else {
+        const id = await storeExpense(expenseData); //instead of triggering a refetch, we just update our context state with the data added
+        expensesContext.addExpense({ ...expenseData, id: id }); // and use the Id we return from the post to juts update the local state with the id from firebase
+      }
+      navigation.goBack();
+    } catch (error) {
+      setError("Could not save data - Please try again later");
+      setIsSubmitting(false);
     }
-    navigation.goBack();
+  }
+  function errorHandler() {
+    setError("");
+  }
+
+  if (isSubmitting) {
+    return <LoadingOverlay />;
+  }
+
+  if (error && !isSubmitting) {
+    return <ErrorOverlay message={error} onConfirm={errorHandler} />;
   }
 
   return (
@@ -68,7 +101,7 @@ function ManageExpense(props: Props) {
             iconName="trash"
             color={GlobalStyles.colors.error500}
             size={36}
-            onPress={deleteExpense}
+            onPress={handleDeleteExpense}
           />
         </View>
       )}

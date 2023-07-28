@@ -1,7 +1,5 @@
 import { IExpense } from "interfaces/IExpenses";
 import { createContext, useReducer } from "react";
-import { DUMMY_EXPENSES } from "data/expensesData";
-import { v4 as uuidv4 } from "uuid";
 import { produce } from "immer";
 
 type Props = {
@@ -11,6 +9,7 @@ type Props = {
 type ExpensesContextType = {
   expenses: IExpense[];
   addExpense: (expense: IExpense) => void;
+  setExpenses: (expenses: IExpense[]) => void;
   deleteExpense: (id: string) => void;
   updateExpense: (id: string, expense: IExpense) => void;
 };
@@ -18,6 +17,7 @@ type ExpensesContextType = {
 export const ExpensesContext = createContext<ExpensesContextType>({
   expenses: [],
   addExpense: () => {},
+  setExpenses: () => {},
   deleteExpense: () => {},
   updateExpense: () => {}
 });
@@ -25,13 +25,18 @@ export const ExpensesContext = createContext<ExpensesContextType>({
 enum ExpensesActionEnum {
   ADD = 1,
   UPDATE = 2,
-  DELETE = 3
+  DELETE = 3,
+  SET = 4
 }
 
 type ExpensesAction =
   | {
       type: ExpensesActionEnum.ADD;
       payload: { expense: IExpense };
+    }
+  | {
+      type: ExpensesActionEnum.SET;
+      payload: { expenses: IExpense[] };
     }
   | {
       type: ExpensesActionEnum.UPDATE;
@@ -45,17 +50,10 @@ function expensesReducer(
 ): IExpense[] {
   switch (action.type) {
     case ExpensesActionEnum.ADD:
-      const id = uuidv4();
-      return [{ ...action.payload.expense, id: id }, ...state];
+      return [action.payload.expense, ...state];
+    case ExpensesActionEnum.SET:
+      return action.payload.expenses.reverse();
     case ExpensesActionEnum.UPDATE:
-      // const expenseToUpdateIndex = state.findIndex(
-      //   (expense) => expense.id === action.payload.id
-      // );
-      // const expenseToUpdate = state[expenseToUpdateIndex];
-      // const updatedItem = { ...expenseToUpdate, ...action.payload.expense };
-      // const updatedExpenses = [...state];
-      // updatedExpenses[expenseToUpdateIndex] = updatedItem;
-      // return updatedExpenses;
       return produce(state, (draftState) => {
         const expenseToUpdateIndex = draftState.findIndex(
           (expense) => expense.id === action.payload.id
@@ -77,10 +75,14 @@ function expensesReducer(
 
 function ExpensesProvider(props: Props) {
   const { children } = props;
-  const [expensesState, dispatch] = useReducer(expensesReducer, DUMMY_EXPENSES);
+  const [expensesState, dispatch] = useReducer(expensesReducer, []);
 
   function addExpense(expense: IExpense) {
     dispatch({ type: ExpensesActionEnum.ADD, payload: { expense } });
+  }
+
+  function setExpenses(expenses: IExpense[]) {
+    dispatch({ type: ExpensesActionEnum.SET, payload: { expenses } });
   }
 
   function updateExpense(id: string, expense: IExpense) {
@@ -97,6 +99,7 @@ function ExpensesProvider(props: Props) {
   const value = {
     expenses: expensesState,
     addExpense: addExpense,
+    setExpenses: setExpenses,
     updateExpense: updateExpense,
     deleteExpense: deleteExpense
   };
